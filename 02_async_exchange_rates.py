@@ -45,7 +45,7 @@ async def get_rates():
         for days in range(PERIOD_DAYS):
             date = today - dt.timedelta(days=days)
             tasks.append(asyncio.create_task(get_rates_for(client, date)))
-            rates = await asyncio.gather(*tasks)
+        rates = await asyncio.gather(*tasks)
 
     log.info('Downloaded in %d ms', (time.monotonic() - start_time) * 1000)
     return rates

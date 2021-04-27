@@ -4,6 +4,7 @@ import os
 import requests
 import time
 import logging
+import random
 
 import httpx
 import fastapi
@@ -24,6 +25,10 @@ PERIOD_DAYS = int(os.environ.get('PERIOD', 2))
 async def get_rates_for(client, date):
     log.info('Starting API request for %s', date)
     content = None
+
+    # An example how to emulate exception in coroutine
+    # if random.randrange(10) > 5:
+    #    raise Exception('Hello')
 
     response = await client.get(
         API_HISTORICAL.format(date.strftime('%Y-%m-%d')),
@@ -48,7 +53,32 @@ async def get_rates(period_days):
         for days in range(period_days):
             date = today - dt.timedelta(days=days)
             tasks.append(asyncio.create_task(get_rates_for(client, date)))
-        rates = await asyncio.gather(*tasks)
+
+        try:
+            rates = await asyncio.gather(*tasks)
+        except Exception as e:
+            # asyncio.gather might actually throw an exception 
+            log.error(e)
+            for task in tasks:
+                if task.done():
+                    if task.exception() is None:
+                        rates.append(task.result())
+                        log.info('Task %s done', task.get_name())
+                    else:
+                        log.info('Task %s has exception', task.get_name())
+                else:
+                    task.cancel()
+                    log.info('Task %s not done', task.get_name())
+
+    # Now we need to cancel all coroutines that are still running
+    cancelled = filter(lambda t: not t.done(), tasks)
+    while list(cancelled):
+        await asyncio.sleep(0.1)
+        cancelled = filter(lambda t: not t.done(), tasks)
+
+    # Check if tasks are cancelled
+    for task in tasks:
+        log.info('Task %s state cancelled=%s', task.get_name(), task.cancelled())
 
     log.info('Downloaded in %d ms', (time.monotonic() - start_time) * 1000)
     return rates

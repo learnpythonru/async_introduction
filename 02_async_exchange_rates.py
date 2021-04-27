@@ -1,9 +1,8 @@
 import asyncio
 import datetime as dt
-import os
-import requests
-import time
 import logging
+import os
+import time
 
 import httpx
 

@@ -1,10 +1,8 @@
 import asyncio
 import datetime as dt
-import os
-import requests
-import time
 import logging
-import random
+import os
+import time
 
 import httpx
 import fastapi
@@ -26,6 +24,8 @@ async def get_rates_for(client, date):
     log.info('Starting API request for %s', date)
     content = None
 
+
+    # import random
     # An example how to emulate exception in coroutine
     # if random.randrange(10) > 5:
     #    raise Exception('Hello')
@@ -57,7 +57,7 @@ async def get_rates(period_days):
         try:
             rates = await asyncio.gather(*tasks)
         except Exception as e:
-            # asyncio.gather might actually throw an exception 
+            # asyncio.gather might actually throw an exception
             log.error(e)
             for task in tasks:
                 if task.done():
